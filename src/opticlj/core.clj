@@ -13,7 +13,7 @@
 
 ;; Output stream writer
 
-(defn- form-output-stream [ns- form result]
+(defn form-output-stream [ns- form result]
   (let [baos (ByteArrayOutputStream.)
         writer (OutputStreamWriter. baos)]
     (.write writer (str "(in-ns '" ns- ")"))
@@ -27,17 +27,17 @@
 
 ;; File utils
 
-(defn- build-filepath [ns- sym]
+(defn build-filepath [ns- sym]
   (let [ns-str   (str/replace (str ns-) #"-" "_")
         sym-file (str/replace (name sym) #"-" "_")
         path-vec (str/split ns-str #"\.")]
     (str/join "/" (conj path-vec (str sym-file ".clj")))))
 
-(defn- build-file [dir path]
+(defn build-file [dir path]
   (doto (File. dir path)
     (.. getParentFile mkdirs)))
 
-(defn- diff-optic [file-obj output]
+(defn diff-optic [file-obj output]
   (let [in (.toByteArray output)
         diff (sh "diff" "-u" (.getPath file-obj) "-" :in in)]
     (when (seq (:out diff))
@@ -48,7 +48,7 @@
 (defn err-filename [file-obj]
   (str/replace (.getPath file-obj) #"\.clj$" ".err.clj"))
 
-(defn- write-optic [ns- sym file-obj form result]
+(defn write-optic [ns- sym file-obj form result]
   (let [output (form-output-stream ns- form result)
         err-file-obj (File. (err-filename file-obj))]
     (merge
@@ -122,25 +122,19 @@
 (defn remove! [& syms]
   (let [atom?  (instance? clojure.lang.Atom (first syms))
         syms'  (if atom? (rest syms) syms)
-        system (if atom? (first syms) system*)])
-  (doseq [sym syms]
-    (let [{:keys [file err-file]} (get-in @system [:optics sym])]
-      (when file (.delete (File. file)))
-      (when err-file (.delete (File. err-file)))))
-  (apply swap! system dissoc :optics syms)
-  (review!))
+        system (if atom? (first syms) system*)]
+    (doseq [sym syms]
+      (let [{:keys [file err-file]} (get-in @system [:optics sym])]
+        (when file (.delete (File. file)))
+        (when err-file (.delete (File. err-file)))))
+    (apply swap! system dissoc :optics syms)
+    (review!)))
 
 (defn clear!
   ([] (clear! system*))
   ([system]
-   (apply remove! (keys (:optics @system)))))
+   (apply remove! system (keys (:optics @system)))))
 
 (defn set-dir!
   ([] (set-dir! system*))
   ([system dir] (swap! system assoc :dir dir)))
-
-;;;; Temporary initial optic
-
-(defoptic error-filename-regex
-  [(err-filename (File. "foo.clj"))
-   (err-filename (File. "foo-bar-baz..clj"))])
