@@ -43,10 +43,6 @@
     (when (seq (:out diff))
       diff)))
 
-;; State
-
-(def system (atom {:dir "test/__optic__" :optics {}}))
-
 ;; Test checker
 
 (defn err-filename [file-obj]
@@ -65,51 +61,68 @@
            {:file (.getPath file-obj) :passing? true :diff nil :err-file nil}))
      {:form form :result result :sym sym :ns ns-})))
 
+;; System
+
+(def system* (atom {:dir "test/__optic__" :optics {}}))
+
 ;; Library exports
 
-(defmacro defoptic [sym form & {:keys [dir]}]
+(defmacro defoptic [sym form & {:keys [dir system]}]
   `(let [ns-#      *ns*
          filepath# (build-filepath ns-# '~sym)
-         file-obj# (build-file (or ~dir (:dir @system)) filepath#)
+         file-obj# (build-file (or ~dir (some-> ~system deref :dir)
+                                   (:dir @system*)) filepath#)
          ns-sym#   (symbol (str ns-#) (name '~sym))]
      (defn ~sym []
        (let [optic# (write-optic ns-# ns-sym# file-obj# '~form ~form)]
-         (swap! system update :optics assoc ns-sym# optic#)
+         (swap! (or ~system system*) update :optics assoc ns-sym# optic#)
          optic#))
      (~sym)
      ~sym))
 
-(defn error [sym]
-  (some-> (get-in @system [:optics sym])
-          :diff :string println))
+(defn error
+  ([sym] (error system* sym))
+  ([system sym]
+   (some-> (get-in @system [:optics sym])
+           :diff :string println)))
 
-(defn errors []
-  (run! error (keys (:optics @system))))
+(defn errors
+  ([] (errors system*))
+  ([system] (run! error (keys (:optics @system)))))
 
-(defn adjust! [sym]
-  (if-let [{:keys [err-file file]} (get-in @system [:optics sym])]
-    (when (and err-file file)
-      (.renameTo (File. err-file) (File. file))
-      {:adjusted ((resolve sym))})
-    {:failure (str "Could not find `" sym "` in defined optics")}))
+(defn adjust!
+  ([sym] (adjust! system* sym))
+  ([system sym]
+   (if-let [{:keys [err-file file]} (get-in @system [:optics sym])]
+     (when (and err-file file)
+       (.renameTo (File. err-file) (File. file))
+       {:adjusted ((resolve sym))})
+     {:failure (str "Could not find `" sym "` in defined optics")})))
 
-(defn adjust-all! []
-  (filter identity (map adjust! (keys (:optics @system)))))
+(defn adjust-all!
+  ([] (adjust-all! system*))
+  ([system]
+   (filter identity (map adjust! (keys (:optics @system))))))
 
 (defn review!* [f exceptions]
   (try ((resolve f))
        (catch Exception e (swap! exceptions conj e))))
 
-(defn review! []
-  (let [exceptions (atom [])]
-    (run! #(review!* % exceptions) (keys (:optics @system)))
-    (let [optics (:optics @system)
-          passed (count (filter :passing? (vals optics)))
-          failed (- (count optics) passed)]
-     (errors)
-     {:passed passed :failed failed :exceptions (count @exceptions)})))
+(defn review!
+  ([] (review! system*))
+  ([system]
+   (let [exceptions (atom [])]
+     (run! #(review!* % exceptions) (keys (:optics @system)))
+     (let [optics (:optics @system)
+           passed (count (filter :passing? (vals optics)))
+           failed (- (count optics) passed)]
+       (errors)
+       {:passed passed :failed failed :exceptions (count @exceptions)}))))
 
 (defn remove! [& syms]
+  (let [atom?  (instance? clojure.lang.Atom (first syms))
+        syms'  (if atom? (rest syms) syms)
+        system (if atom? (first syms) system*)])
   (doseq [sym syms]
     (let [{:keys [file err-file]} (get-in @system [:optics sym])]
       (when file (.delete (File. file)))
@@ -117,11 +130,14 @@
   (apply swap! system dissoc :optics syms)
   (review!))
 
-(defn clear! []
-  (apply remove! (keys (:optics @system))))
+(defn clear!
+  ([] (clear! system*))
+  ([system]
+   (apply remove! (keys (:optics @system)))))
 
-(defn set-dir! [dir]
-  (swap! system assoc :dir dir))
+(defn set-dir!
+  ([] (set-dir! system*))
+  ([system dir] (swap! system assoc :dir dir)))
 
 ;;;; Temporary initial optic
 
