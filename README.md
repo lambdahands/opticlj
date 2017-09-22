@@ -10,9 +10,9 @@ output of a program as a reference to its correctness. In contrast to unit
 testing, snapshots don't require the programmer to _specify_ the correct output
 of their program but instead to _verify_ the output.
 
-`opticlj` let's you define these snapshots and automatically generates the
-outputs into files. If you change the implementation of a program, the output
-files may be checked against the new behavior.
+`opticlj` let's you define these snapshots and automatically generate the
+outputs into files. If you change the implementation of your program, the output
+files may be checked against the new behavior for differences.
 
 I was inspired by this testing strategy because it navigates elegantly between
 REPL driven development and testing. Unit testing is often cumbersome, but I've
@@ -74,7 +74,9 @@ Define an `optic` like so:
 This does two things:
 
 - The "runner" function `one-plus-one` is defined
-- A output file is written in `test/__optic__/my_project/core_test/one_plus_one.clj`
+- An output file is written in `test/__optic__/my_project/core_test/one_plus_one.clj`
+
+Here's what `one_plus_one.clj` looks like:
 
 ```clj
 (in-ns 'my-project.core-test)
@@ -83,6 +85,9 @@ This does two things:
 
 2
 ```
+
+The `in-ns` expression allows us to evaluate this file, which is especially
+useful if your editor integrates with the REPL.
 
 Next, if we change the implementation of `add` and re-run the optic, we get an
 output confirming the snapshot was checked:
@@ -104,8 +109,18 @@ output confirming the snapshot was checked:
  :ns #object[clojure.lang.Namespace 0x2cc4080a "my-project.core-test"]}
 ```
 
-Notice how the `:passing?` key is `false`. We can view our error diff by calling
-`optic/errors`:
+A new file was created: `test/__optic__/my_project/core_test/one_plus_one.err.clj`
+
+```clj
+(in-ns 'my-project.core-test)
+
+(add 1 1)
+
+4
+```
+
+Also, note how the `:passing?` key is `false`. We can view our error diff by
+calling `optic/errors`:
 
 ```clj
 (optic/errors)
