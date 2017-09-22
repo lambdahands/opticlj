@@ -1,5 +1,0 @@
-(set-env! :source-paths #{"src"})
-(clojure.edn/read-string "450,000")
-(defmacro a [f] `['~f ~f])
-(a (+ 2 2))
-(set-env! :source-paths #{"src" "test"})
