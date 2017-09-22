@@ -4,6 +4,6 @@
 ;;;; Temporary initial optic
 
 (defoptic error-filename-regex
-  [(err-filename (File. "foo.clj"))
-   (err-filename (File. "foo-bar-baz..clj"))])
+  [(err-filename (java.io.File. "foo.clj"))
+   (err-filename (java.io.File. "foo-bar-baz..clj"))])
 
