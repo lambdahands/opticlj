@@ -16,7 +16,7 @@
 (defn- form-output-stream [ns- form result]
   (let [baos (ByteArrayOutputStream.)
         writer (OutputStreamWriter. baos)]
-    (.write writer (str "(use '" ns- ")"))
+    (.write writer (str "(in-ns '" ns- ")"))
     (.write writer "\n\n")
     (pp/write form :stream writer)
     (.write writer "\n\n")
@@ -109,11 +109,22 @@
      (errors)
      {:passed passed :failed failed :exceptions (count @exceptions)})))
 
+(defn remove! [& syms]
+  (doseq [sym syms]
+    (let [{:keys [file err-file]} (get-in @system [:optics sym])]
+      (when file (.delete (File. file)))
+      (when err-file (.delete (File. err-file)))))
+  (apply swap! system dissoc :optics syms)
+  (review!))
+
+(defn clear! []
+  (apply remove! (keys (:optics @system))))
+
 (defn set-dir! [dir]
   (swap! system assoc :dir dir))
 
 ;;;; Temporary initial optic
 
-(defoptic filepath-from-sym
-  [(build-filepath *ns* 'foo)
-   (build-filepath *ns* 'bar-baz)])
+(defoptic error-filename-regex
+  [(err-filename (File. "foo.clj"))
+   (err-filename (File. "foo-bar-baz..clj"))])
