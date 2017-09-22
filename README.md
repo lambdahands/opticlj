@@ -75,7 +75,7 @@ Define an `optic` like so:
 This does two things:
 
 - Defines "runner" function `one-plus-one`
-- Wriets an output file in `test/__optic__/my_project/core_test/one_plus_one.clj`
+- Writes an output file in `test/__optic__/my_project/core_test/one_plus_one.clj`
 
 Here's what `one_plus_one.clj` looks like:
 
