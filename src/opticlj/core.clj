@@ -96,7 +96,7 @@
    (if-let [{:keys [err-file file]} (get-in @system [:optics sym])]
      (when (and err-file file)
        (.renameTo (File. err-file) (File. file))
-       {:adjusted ((resolve sym))})
+       {:adjusted ((ns-resolve *ns* sym))})
      {:failure (str "Could not find `" sym "` in defined optics")})))
 
 (defn adjust-all!
