@@ -105,7 +105,7 @@ output confirming the snapshot was checked:
  :diff {:string "<truncated>"},
  :form (add 1 1),
  :result 4,
- :sym opticlj.core-test/one-plus-one,
+ :sym my-project.core-test/one-plus-one,
  :ns #object[clojure.lang.Namespace 0x2cc4080a "my-project.core-test"]}
 ```
 
@@ -148,13 +148,13 @@ of one and one equal four. We can `adjust!` our optic to accept these new rules:
 (optic/adjust! `one-plus-one)
 
 ; outputs
-{:adjusted {:file "test/__optic__/opticlj/core_test/one_plus_one.clj"
+{:adjusted {:file "test/__optic__/my_project/core_test/one_plus_one.clj"
             :passing? true
             :diff nil
             :err-file nil
             :form (add 1 1)
             :result 4
-            :sym opticlj.core-test/one-plus-one
+            :sym my-project.core-test/one-plus-one
             :ns #object[clojure.lang.Namespace 0x2cc4080a "my-project.core-test"]}}
 ```
 
