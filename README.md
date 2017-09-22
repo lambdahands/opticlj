@@ -35,6 +35,7 @@ cases where correctness must be _"proven"_ (big air quotes).
 - [Snapshot Testing in Swift](http://www.stephencelis.com/2017/09/snapshot-testing-in-swift)
 - [Testing with expectations](https://blog.janestreet.com/testing-with-expectations/)
 - [Mercurial: adding 'unified' tests](https://www.selenic.com/blog/?p=663)
+- [Jest: Snapshot Testing](https://facebook.github.io/jest/docs/en/snapshot-testing.html)
 
 ## Installation
 
