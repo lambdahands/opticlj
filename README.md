@@ -21,14 +21,14 @@ correctness of my functions by simply evaluating them, but that output doesn't
 persist outside of my own machine.
 
 Snapshot testing may be a way for Clojure developers to cast a wide net over
-the correctness of their programs in while staying close to the REPL.
+the correctness of their programs while staying close to the REPL.
 
 ### Use Cases
 
 Snapshot testing is often a great substitute to unit testing, but it in no way
 has the power to verify programs as thoroughly as property-based testing.
 Snapshot tests are best used for _pure functions_, and aren't recommended in
-cases where correctness must be _proven_.
+cases where correctness must be _"proven"_ (big air quotes).
 
 **Inspirations**
 
@@ -73,8 +73,8 @@ Define an `optic` like so:
 
 This does two things:
 
-- The "runner" function `one-plus-one` is defined
-- An output file is written in `test/__optic__/my_project/core_test/one_plus_one.clj`
+- Defines "runner" function `one-plus-one`
+- Wriets an output file in `test/__optic__/my_project/core_test/one_plus_one.clj`
 
 Here's what `one_plus_one.clj` looks like:
 
@@ -142,7 +142,7 @@ echo "...my new output..." | diff -u <output-file> -
 ```
 
 Let's say we wanted to change the rules of our universe and make the addition
-of one and one equal four. We can `adjust!` our optic to accept these new rules:
+of one and one equal to four. We can `adjust!` our optic to accept these new rules:
 
 ```clj
 (optic/adjust! `one-plus-one)
