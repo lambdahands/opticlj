@@ -1,12 +1,21 @@
 (ns opticlj.core-test
-  (:require [opticlj.core :refer :all]))
+  (:require [opticlj.core :as optic]))
 
-;;;; Temporary initial optic
+(optic/defoptic form-output-stream
+  (map (fn [[form result]]
+         (optic/form-output-stream `optic/form-output-stream form result))
+       '[[(+ 1 1)              2]
+         [(map inc (range 10)) (1 2 3 4 5 6 7 8 9 10)]]))
 
-(defoptic error-filename-regex
-  [(err-filename (java.io.File. "foo.clj"))
-   (err-filename (java.io.File. "foo-bar-baz..clj"))])
+(optic/defoptic err-filename
+  [(optic/err-filename (java.io.File. "foo.clj"))
+   (optic/err-filename (java.io.File. "foo-bar-baz..clj"))])
 
-(defoptic form-output-stream-result
-  [(.toString (form-output-stream *ns* '(+ 1 1) 2))
-   (.toString (form-output-stream *ns* '(map inc (range 10)) '(1 2 3 4 5 6 7 8 9 10)))])
+(optic/defoptic defoptic
+  (let [system (atom {:optics {} :dir "test/__optic__"})]
+    (optic/defoptic fibonacci
+      (take 10 (iterate (fn [[a b]] [b (+ a b)]) [1 1]))
+      :system system)
+    (get-in @system [:optics `fibonacci])))
+
+(optic/review!)

@@ -1,8 +1,10 @@
 (ns opticlj.core
-  (:require [clojure.java.shell :as shell :refer [sh]]
+  (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.pprint :as pp])
-  (:import [java.io File ByteArrayOutputStream OutputStreamWriter Writer]))
+  (:import [java.io ByteArrayOutputStream OutputStreamWriter Writer
+            BufferedReader StringReader FileReader]
+           [difflib DiffUtils]))
 
 ;; Manage diff display
 
@@ -13,53 +15,68 @@
 
 ;; Output stream writer
 
-(defn form-output-stream [ns- form result]
-  (let [baos (ByteArrayOutputStream.)
-        writer (OutputStreamWriter. baos)]
-    (.write writer (str "(in-ns '" ns- ")"))
-    (.write writer "\n\n")
-    (pp/write form :stream writer)
-    (.write writer "\n\n")
-    (pp/write result :stream writer)
-    (.write writer "\n")
-    (.close writer)
-    baos))
+(defn form-output-stream [sym form result]
+  (str/join "\n" [(str "(in-ns '" (namespace sym) ")") ""
+                  (pp/write form :stream nil) ""
+                  (pp/write result :stream nil) ""]))
 
 ;; File utils
 
-(defn build-filepath [ns- sym]
-  (let [ns-str   (str/replace (str ns-) #"-" "_")
+(def file-match #"(\.err\.clj$|\.clj$)")
+
+(defn sym->filepath [sym]
+  (let [ns-str   (str/replace (namespace sym) #"-" "_")
         sym-file (str/replace (name sym) #"-" "_")
         path-vec (str/split ns-str #"\.")]
     (str/join "/" (conj path-vec (str sym-file ".clj")))))
 
+(defn filepath->sym [filepath prefix]
+  (let [subpath (str/replace filepath (re-pattern (str "^" prefix "?/")) "")
+        tokens  (str/split (str/replace subpath #"_" "-")  #"/")
+        symname (str/replace (last tokens) file-match "")
+        ns-path (str/join "." (butlast tokens))]
+    (symbol (str ns-path "/" symname))))
+
+(defn dir-syms [dir]
+  (->> (map str (file-seq (io/file dir)))
+    (filter #(re-find file-match %))
+    (map (fn [s] [(filepath->sym s dir) s]))
+    (into {})))
+
 (defn build-file [dir path]
-  (doto (File. dir path)
+  (doto (io/file dir path)
     (.. getParentFile mkdirs)))
 
 (defn diff-optic [file-obj output]
-  (let [in (.toByteArray output)
-        diff (sh "diff" "-u" (.getPath file-obj) "-" :in in)]
-    (when (seq (:out diff))
-      diff)))
+  (let [filename   (.getPath file-obj)
+        file-lines (line-seq (BufferedReader. (FileReader. filename)))
+        oput-lines (line-seq (BufferedReader. (StringReader. output)))
+        file-diff  (DiffUtils/diff file-lines oput-lines)
+        unified    (DiffUtils/generateUnifiedDiff filename
+                                                  (err-filename file-obj)
+                                                  file-lines
+                                                  file-diff
+                                                  3)]
+    (when (seq unified)
+      {:out (str/join "\n" unified)})))
 
 ;; Test checker
 
 (defn err-filename [file-obj]
   (str/replace (.getPath file-obj) #"\.clj$" ".err.clj"))
 
-(defn write-optic [ns- sym file-obj form result]
-  (let [output (form-output-stream ns- form result)
-        err-file-obj (File. (err-filename file-obj))]
+(defn write-optic [file-obj sym form result]
+  (let [output (form-output-stream sym form result)
+        err-file-obj (io/file (err-filename file-obj))]
     (merge
      (if-let [err (and (.exists file-obj) (diff-optic file-obj output))]
-       (do (spit err-file-obj (.toString output))
+       (do (spit err-file-obj output)
            {:file (.getPath file-obj) :passing? false :diff (->Diff (:out err))
             :err-file (.getPath err-file-obj)})
-       (do (spit file-obj (.toString output))
+       (do (spit file-obj output)
            (when (.exists err-file-obj) (.delete err-file-obj))
            {:file (.getPath file-obj) :passing? true :diff nil :err-file nil}))
-     {:form form :result result :sym sym :ns ns-})))
+     {:form form :result result :sym sym})))
 
 ;; System
 
@@ -68,13 +85,12 @@
 ;; Library exports
 
 (defmacro defoptic [sym form & {:keys [dir system]}]
-  `(let [ns-#      *ns*
-         filepath# (build-filepath ns-# '~sym)
+  `(let [ns-sym#   (symbol (str (:ns (meta (declare ~sym)))) (name '~sym))
+         filepath# (sym->filepath ns-sym#)
          file-obj# (build-file (or ~dir (some-> ~system deref :dir)
-                                   (:dir @system*)) filepath#)
-         ns-sym#   (symbol (str ns-#) (name '~sym))]
+                                   (:dir @system*)) filepath#)]
      (defn ~sym []
-       (let [optic# (write-optic ns-# ns-sym# file-obj# '~form ~form)]
+       (let [optic# (write-optic file-obj# ns-sym# '~form ~form)]
          (swap! (or ~system system*) update :optics assoc ns-sym# optic#)
          optic#))
      (~sym)
@@ -95,8 +111,8 @@
   ([system sym]
    (if-let [{:keys [err-file file]} (get-in @system [:optics sym])]
      (when (and err-file file)
-       (.renameTo (File. err-file) (File. file))
-       {:adjusted ((ns-resolve *ns* sym))})
+       (.renameTo (io/file err-file) (io/file file))
+       {:adjusted ((resolve sym))})
      {:failure (str "Could not find `" sym "` in defined optics")})))
 
 (defn adjust-all!
@@ -123,11 +139,11 @@
   (let [atom?  (instance? clojure.lang.Atom (first syms))
         syms'  (if atom? (rest syms) syms)
         system (if atom? (first syms) system*)]
-    (doseq [sym syms]
+    (doseq [sym syms']
       (let [{:keys [file err-file]} (get-in @system [:optics sym])]
-        (when file (.delete (File. file)))
-        (when err-file (.delete (File. err-file)))))
-    (apply swap! system dissoc :optics syms)
+        (when file (.delete (io/file file)))
+        (when err-file (.delete (io/file err-file)))))
+    (apply swap! system dissoc :optics syms')
     (review!)))
 
 (defn clear!
@@ -138,3 +154,17 @@
 (defn set-dir!
   ([] (set-dir! system*))
   ([system dir] (swap! system assoc :dir dir)))
+
+(defn clean!
+  ([] (clean! system* nil))
+  ([k] (clean! system* k))
+  ([system k]
+   (let [{:keys [optics dir]} @system]
+     (if (= k :confirm)
+       (println "Deleting files...")
+       (println "The below files are stale. Run with :confirm to delete."))
+     (doseq [[sym path] (dir-syms dir)]
+       (when-not (get optics sym)
+         (when (= k :confirm)
+           (.delete (io/file path)))
+         (println path))))))
