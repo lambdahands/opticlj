@@ -1,13 +1,12 @@
 (ns opticlj.file
   (:require #?(:clj [clojure.java.io :as io])
+            #?(:cljs [cljsjs.jsdiff])
             [clojure.string :as str])
   #?(:clj (:import [java.io BufferedReader StringReader FileReader]
                    [difflib DiffUtils])))
 
 #?(:cljs (def fs        (js/require "fs")))
-#?(:cljs (def mkdirp    (js/require "mkdirp")))
 #?(:cljs (def node-path (js/require "path")))
-#?(:cljs (def node-diff (js/require "diff")))
 
 ;; File utils
 
@@ -36,10 +35,17 @@
 (defn dir-syms [dir]
   (into {} (map #(vector (filepath->sym % dir) %) (dir-optics dir))))
 
+#?(:cljs
+   (defn mkdir [parent child]
+     (let [curdir (node-path.resolve parent child)]
+       (when-not (fs.existsSync curdir)
+         (fs.mkdirSync curdir))
+       curdir)))
+
 (defn stage [dir path]
   #?(:clj  (str (doto (io/file dir path) (.. getParentFile mkdirs)))
      :cljs (let [path' (node-path.join dir path)]
-             (mkdirp.sync (node-path.dirname path') #js {})
+             (reduce mkdir (str/split (node-path.dirname path') #"/"))
              path')))
 
 (defn exists [path]
@@ -76,4 +82,4 @@
               (str/join "\n" unified)))
      :cljs (let [file-str (.toString (fs.readFileSync path))]
              (when-not (= file-str output)
-               (node-diff.createTwoFilesPatch path err-path file-str output)))))
+               (js/JsDiff.createTwoFilesPatch path err-path file-str output)))))
