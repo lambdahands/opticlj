@@ -48,9 +48,11 @@ cases where correctness must be _"proven"_ (big air quotes).
 
 **Disclaimer**
 
-`opticlj` is alpha software, and its API is likely subject to change.
+opticlj is alpha software, and its API is likely subject to change.
 
 ## Usage
+
+The below example is a way to get started with opticlj with Clojure.
 
 Require the `opticlj.core` namespace to get started:
 
@@ -97,17 +99,16 @@ output confirming the snapshot was checked:
 (defn add [x y]
   (+ x y 2))
 
-(one-plus-one)
+(run ::one-plus-one)
 
 ; outputs
-{:file "test/__optic__/my_project/core_test/one_plus_one.clj",
- :err-file "test/__optic__/my_project/core_test/one_plus_one.err.clj",
- :passing? false,
- :diff {:string "<truncated>"},
- :form (add 1 1),
- :result 4,
- :sym my-project.core-test/one-plus-one,
- :ns #object[clojure.lang.Namespace 0x2cc4080a "my-project.core-test"]}
+{:file "test/__optic__/my_project/core_test/one_plus_one.clj"
+ :err-file "test/__optic__/my_project/core_test/one_plus_one.err.clj"
+ :passing? false
+ :diff {:string "<truncated>"}
+ :form (add 1 1)
+ :result 4
+ :kw :my-project.core-test/one-plus-one}
 ```
 
 A new file was created: `test/__optic__/my_project/core_test/one_plus_one.err.clj`
@@ -146,7 +147,7 @@ Let's say we wanted to change the rules of our universe and make the addition
 of one and one equal to four. We can `adjust!` our optic to accept these new rules:
 
 ```clj
-(optic/adjust! `one-plus-one)
+(optic/adjust! ::one-plus-one)
 
 ; outputs
 {:adjusted {:file "test/__optic__/my_project/core_test/one_plus_one.clj"
@@ -155,8 +156,7 @@ of one and one equal to four. We can `adjust!` our optic to accept these new rul
             :err-file nil
             :form (add 1 1)
             :result 4
-            :sym my-project.core-test/one-plus-one
-            :ns #object[clojure.lang.Namespace 0x2cc4080a "my-project.core-test"]}}
+            :kw :my-project.core-test/one-plus-one}}
 ```
 
 Now when we check for errors, we see we have resolved our new form of arithmetic:
@@ -166,6 +166,28 @@ Now when we check for errors, we see we have resolved our new form of arithmetic
 
 ; outputs
 nil
+```
+
+## ClojureScript
+
+opticlj supports ClojureScript with a few caveats, namely that in order to run
+ClojureScript tests, you must output your test code using `:target :nodejs` in
+your compiler options. See the [test/opticlj/cljs](test/opticlj/cljs/) directory
+for an example of using opticlj with the [doo](https://github.com/bensu/doo)
+test runner.
+
+A convenience function, `opticlj.core/passing?`, exists to wrap opticlj's tests
+in a `cljs.test/deftest` expression. For example:
+
+```clj
+(ns my-cljs-tests
+  (:require [cljs.test :as test :refer-macros [deftest]]
+            [opticlj.core :as optic :refer-macros [defoptic]]))
+
+(defoptic ::two-plus-two (+ 2 2))
+
+(deftest optics
+  (test/is (optic/passing? (optic/review!))))
 ```
 
 ## Todo
