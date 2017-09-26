@@ -10,16 +10,20 @@
                  [figwheel-sidecar "0.5.13"]
                  [com.cemerick/piggieback "0.2.1"]]
   :plugins      [[lein-cljsbuild "1.1.7"]
-                 [lein-figwheel "0.5.13"]]
+                 [lein-figwheel "0.5.13"]
+                 [lein-doo "0.1.7"]]
   :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
   :clean-targets ^{:protect false} ["target"]
   :cljsbuild {:builds [{:id "test"
                         :source-paths ["src/opticlj/cljs/" "test/opticlj/cljs/"]
                         :figwheel true
-                        :compiler {:main opticlj.cljs.core-test
+                        :compiler {:main opticlj.cljs.runner
                                    :output-to "target/test/main.js"
                                    :output-dir "target/test"
                                    :target :nodejs
+                                   :npm-deps {:mkdirp "0.5.1"
+                                              :diff   "3.3.1"}
+                                   :install-deps true
                                    ;:source-map true
                                    :optimizations :none}}]}
   :figwheel {})
