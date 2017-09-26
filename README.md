@@ -1,6 +1,6 @@
 # opticlj
 
-opticlj is a Clojure expectation testing (also known as snapshot testing)
+opticlj is a Clojure(Script) expectation testing (also known as snapshot testing)
 library.
 
 ## Rationale
@@ -40,7 +40,7 @@ cases where correctness must be _"proven"_ (big air quotes).
 ## Installation
 
 ```
-[opticlj "1.0.0-alpha2"]
+[opticlj "1.0.0-alpha3"]
 ```
 
 [See on Clojars](https://clojars.org/opticlj)
@@ -48,9 +48,11 @@ cases where correctness must be _"proven"_ (big air quotes).
 
 **Disclaimer**
 
-`opticlj` is alpha software, and its API is likely subject to change.
+opticlj is alpha software, and its API is likely subject to change.
 
 ## Usage
+
+The below example is a way to get started with opticlj in Clojure.
 
 Require the `opticlj.core` namespace to get started:
 
@@ -69,12 +71,12 @@ Let's define a function to test:
 Define an `optic` like so:
 
 ```clj
-(defoptic one-plus-one (add 1 1))
+(defoptic ::one-plus-one (add 1 1))
 ```
 
 This does two things:
 
-- Defines "runner" function `one-plus-one`
+- Defines "runner" function that can be accessed with `opticlj.core/run`
 - Writes an output file in `test/__optic__/my_project/core_test/one_plus_one.clj`
 
 Here's what `one_plus_one.clj` looks like:
@@ -90,24 +92,23 @@ Here's what `one_plus_one.clj` looks like:
 The `in-ns` expression allows us to evaluate this file, which is especially
 useful if your editor integrates with the REPL.
 
-Next, if we change the implementation of `add` and re-run the optic, we get an
+Next, if we change the implementation of `add` and re-run the optic, we get
 output confirming the snapshot was checked:
 
 ```clj
 (defn add [x y]
-  (+ x y))
+  (+ x y 2))
 
-(one-plus-one)
+(run ::one-plus-one)
 
 ; outputs
-{:file "test/__optic__/my_project/core_test/one_plus_one.clj",
- :err-file "test/__optic__/my_project/core_test/one_plus_one.err.clj",
- :passing? false,
- :diff {:string "<truncated>"},
- :form (add 1 1),
- :result 4,
- :sym my-project.core-test/one-plus-one,
- :ns #object[clojure.lang.Namespace 0x2cc4080a "my-project.core-test"]}
+{:file "test/__optic__/my_project/core_test/one_plus_one.clj"
+ :err-file "test/__optic__/my_project/core_test/one_plus_one.err.clj"
+ :passing? false
+ :diff {:string "<truncated>"}
+ :form (add 1 1)
+ :result 4
+ :kw :my-project.core-test/one-plus-one}
 ```
 
 A new file was created: `test/__optic__/my_project/core_test/one_plus_one.err.clj`
@@ -146,7 +147,7 @@ Let's say we wanted to change the rules of our universe and make the addition
 of one and one equal to four. We can `adjust!` our optic to accept these new rules:
 
 ```clj
-(optic/adjust! `one-plus-one)
+(optic/adjust! ::one-plus-one)
 
 ; outputs
 {:adjusted {:file "test/__optic__/my_project/core_test/one_plus_one.clj"
@@ -155,8 +156,7 @@ of one and one equal to four. We can `adjust!` our optic to accept these new rul
             :err-file nil
             :form (add 1 1)
             :result 4
-            :sym my-project.core-test/one-plus-one
-            :ns #object[clojure.lang.Namespace 0x2cc4080a "my-project.core-test"]}}
+            :kw :my-project.core-test/one-plus-one}}
 ```
 
 Now when we check for errors, we see we have resolved our new form of arithmetic:
@@ -168,12 +168,32 @@ Now when we check for errors, we see we have resolved our new form of arithmetic
 nil
 ```
 
+## ClojureScript
+
+opticlj supports ClojureScript with a few caveats, namely that in order to run
+ClojureScript tests, you must output your test code using `:target :nodejs` in
+your compiler options. See the [test/opticlj/cljs](test/opticlj/cljs/) directory
+for an example of using opticlj with the [doo](https://github.com/bensu/doo)
+test runner.
+
+A convenience function, `opticlj.core/passing?`, exists to wrap opticlj's tests
+in a `cljs.test/deftest` expression. For example:
+
+```clj
+(ns my-project.cljs.core-test
+  (:require [cljs.test :as test :refer-macros [deftest]]
+            [opticlj.core :as optic :refer-macros [defoptic]]))
+
+(defoptic ::two-plus-two (+ 2 2))
+
+(deftest optics
+  (test/is (optic/passing? (optic/review!))))
+```
+
 ## Todo
 
+- [x] Warn if optics is undefined in the program yet exists in a file
+- [x] Add a `clean!` method to remove unused optics
+- [x] Use `defoptic` on `defoptic` _(Inception noise)_
 - [ ] Complete API documentation
-- [ ] Reimplement core API with stateless methods, allow for wider snapshots
-- [ ] Warn if optics is undefined in the program yet exists in a file
-- [ ] Add a `clean!` method to remove unused optics
-- [ ] Use `defoptic` on `defoptic` _(Inception noise)_
-- [ ] lein/boot command integration
-- [ ] Pretty output, feat. colors
+- [ ] Reimplement core API with stateless methods

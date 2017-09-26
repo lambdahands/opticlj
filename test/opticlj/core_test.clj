@@ -1,12 +1,26 @@
 (ns opticlj.core-test
-  (:require [opticlj.core :refer :all]))
+  (:require [clojure.java.io :as io]
+            [opticlj.core :as optic]
+            [opticlj.file :as file]
+            [opticlj.writer :as writer]
+            [clojure.test :as test :refer [deftest]]))
 
-;;;; Temporary initial optic
+(optic/defoptic ::form-output-stream
+  (map (fn [[form result]]
+         (writer/form-output-stream `writer/form-output-stream form result))
+       '[[(+ 1 1)              2]
+         [(map inc (range 10)) (1 2 3 4 5 6 7 8 9 10)]]))
 
-(defoptic error-filename-regex
-  [(err-filename (java.io.File. "foo.clj"))
-   (err-filename (java.io.File. "foo-bar-baz..clj"))])
+(optic/defoptic ::err-filename
+  [(file/err-path "foo.clj") (file/err-path "foo-bar-baz..clj")])
 
-(defoptic form-output-stream-result
-  [(.toString (form-output-stream *ns* '(+ 1 1) 2))
-   (.toString (form-output-stream *ns* '(map inc (range 10)) '(1 2 3 4 5 6 7 8 9 10)))])
+(defn fib [n]
+  (take n (iterate (fn [[a b]] [b (+ a b)]) [1 1])))
+
+(optic/defoptic ::defoptic
+  (let [system (atom {:optics {} :dir "test/__optic__"})]
+    (optic/defoptic ::fibonacci (fib 10) :system system)
+    (get-in @system [:optics ::fibonacci])))
+
+(deftest optics
+  (test/is (optic/passing? (optic/review!))))
