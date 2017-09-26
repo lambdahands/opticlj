@@ -18,7 +18,8 @@
   (let [ns-str   (str/replace (namespace sym) #"-" "_")
         sym-file (str/replace (name sym) #"-" "_")
         path-vec (str/split ns-str #"\.")]
-    (str/join "/" (conj path-vec (str sym-file ".clj")))))
+    (str/join "/" (conj path-vec (str sym-file #?(:clj  ".clj"
+                                                  :cljs ".cljs"))))))
 
 (defn filepath->sym [filepath prefix]
   (let [subpath (str/replace filepath (re-pattern (str "^" prefix "?/")) "")
@@ -38,7 +39,7 @@
 (defn stage [dir path]
   #?(:clj  (str (doto (io/file dir path) (.. getParentFile mkdirs)))
      :cljs (let [path' (node-path.join dir path)]
-             (mkdirp (node-path.dirname path) #js {} (constantly nil))
+             (mkdirp.sync (node-path.dirname path') #js {})
              path')))
 
 (defn exists [path]
@@ -46,12 +47,12 @@
      :cljs (fs.existsSync path)))
 
 (defn rename [from-path to-path]
-  #?(:clj  (.renameTo (io/file from-path) (io/file to-path))
+  #?(:clj  (.renameTo (io/file to-path) (io/file from-path))
      :cljs (when (exists from-path) (fs.rename from-path to-path))))
 
 (defn delete [path]
   #?(:clj  (.delete (io/file path))
-     :cljs (when (exists path) (fs.delete path))))
+     :cljs (when (exists path) (fs.unlink path (constantly nil)))))
 
 (defn path [file]
   #?(:clj  (.getPath file)
@@ -59,7 +60,7 @@
 
 (defn write [file output]
   #?(:clj  (spit file output)
-     :cljs (fs.writeFile file output (constantly nil))))
+     :cljs (fs.writeFileSync file output)))
 
 (defn err-path [path]
   #?(:clj  (str/replace path #"\.clj$" ".err.clj")
@@ -73,7 +74,6 @@
                 unified (DiffUtils/generateUnifiedDiff path err-path f-lines f-diff 3)]
             (when (seq unified)
               (str/join "\n" unified)))
-     :cljs (let [file-str nil #_(fs.readFileSync path)]
-             (println path err-path output)
+     :cljs (let [file-str (.toString (fs.readFileSync path))]
              (when-not (= file-str output)
                (node-diff.createTwoFilesPatch path err-path file-str output)))))

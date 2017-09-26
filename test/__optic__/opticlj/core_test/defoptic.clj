@@ -2,7 +2,7 @@
 
 (let
  [system (atom {:optics {}, :dir "test/__optic__"})]
- (optic/defoptic fibonacci (fib 10) :system system)
+ (optic/defoptic :opticlj.core-test/fibonacci (fib 10) :system system)
  (get-in @system [:optics 'opticlj.core-test/fibonacci]))
 
 {:form (fib 10),

@@ -15,5 +15,6 @@ pom.xml.asc
 .hgignore
 .hg/
 .nrepl-history
-.figwheel_server.log
 node_modules/
+.cljs_rhino_repl/
+figwheel_server.log

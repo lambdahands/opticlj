@@ -4,20 +4,23 @@
 
 ;; System
 
-(def system* (atom {:dir "test/__optic__" :optics {}}))
+(def system*
+  (atom {:dir #?(:clj  "test/__optic__"
+                 :cljs "test/__optic_cljs__")
+         :optics {}}))
 
 ;; Library exports
 
-(defmacro defoptic [sym form & {:keys [dir system]}]
-  `(let [sym#  (symbol (namespace ::__hack) (name '~sym))
+(defmacro defoptic [kw form & {:keys [dir system]}]
+  `(let [sym#  (symbol (namespace ~kw) (name ~kw))
          dir#  (or ~dir (some-> ~system deref :dir) (:dir @system*))
          path# (file/stage dir# (file/sym->filepath sym#))]
-     (defn ~sym []
+     (defn ~(symbol (namespace kw) (name kw)) []
        (let [optic# (writer/write path# sym# '~form ~form)]
          (swap! (or ~system system*) update :optics assoc sym# optic#)
          optic#))
-     (~sym)
-     ~sym))
+     (~(symbol (namespace kw) (name kw)))
+     ~(symbol (namespace kw) (name kw))))
 
 (defn error
   ([sym] (error system* sym))
@@ -29,15 +32,15 @@
   ([system] (run! error (keys (:optics @system)))))
 
 (defmacro adjust!* [system sym]
-  `(if-let [{:keys [err-file# file#]} (get-in @~system [:optics ~sym])]
-     (when (and err-file# file#)
-       (file/rename err-file# file#)
-       {:adjusted ((resolve ~sym))})
-     {:failure (str "Could not find `" ~sym "` in defined optics")}))
+  `(let [optic# (get-in ~system [:optics ~sym])]
+     (if optic#
+       (when (and (:err-file optic#) (:file optic#))
+         {:adjusted ((resolve ~sym))})
+       {:failure (str "Could not find `" ~sym "` in defined optics")})))
 
 (defn adjust!
-  ([sym] (adjust!* system* sym))
-  ([system sym] (adjust!* system sym)))
+  ([sym] (adjust!* @system* sym))
+  ([system sym] (adjust!* @system sym)))
 
 (defn adjust-all!
   ([] (adjust-all! system*))
@@ -88,6 +91,11 @@
    (= k :confirm) (println "Deleting files...")
    :else          (println "The below files aren't defined in the system with"
                            "the :dir" dir ". Run with :confirm to delete.")))
+
+(defn passing? [{:keys [passed failed exceptions] :as ugh}]
+  (= 0 (+ failed exceptions)))
+
+;; TODO: Implement these utility functions in ClojureScript
 
 #?(:clj
    (defn filtered-syms [dir optics]
