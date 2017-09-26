@@ -52,7 +52,7 @@ opticlj is alpha software, and its API is likely subject to change.
 
 ## Usage
 
-The below example is a way to get started with opticlj with Clojure.
+The below example is a way to get started with opticlj in Clojure.
 
 Require the `opticlj.core` namespace to get started:
 
@@ -76,7 +76,7 @@ Define an `optic` like so:
 
 This does two things:
 
-- Defines "runner" function `one-plus-one`
+- Defines "runner" function that can be accessed with `opticlj.core/run`
 - Writes an output file in `test/__optic__/my_project/core_test/one_plus_one.clj`
 
 Here's what `one_plus_one.clj` looks like:
@@ -92,7 +92,7 @@ Here's what `one_plus_one.clj` looks like:
 The `in-ns` expression allows us to evaluate this file, which is especially
 useful if your editor integrates with the REPL.
 
-Next, if we change the implementation of `add` and re-run the optic, we get an
+Next, if we change the implementation of `add` and re-run the optic, we get
 output confirming the snapshot was checked:
 
 ```clj
@@ -180,7 +180,7 @@ A convenience function, `opticlj.core/passing?`, exists to wrap opticlj's tests
 in a `cljs.test/deftest` expression. For example:
 
 ```clj
-(ns my-cljs-tests
+(ns my-project.cljs.core-test
   (:require [cljs.test :as test :refer-macros [deftest]]
             [opticlj.core :as optic :refer-macros [defoptic]]))
 
