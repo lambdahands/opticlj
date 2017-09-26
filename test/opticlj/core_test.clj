@@ -20,7 +20,7 @@
 (optic/defoptic ::defoptic
   (let [system (atom {:optics {} :dir "test/__optic__"})]
     (optic/defoptic ::fibonacci (fib 10) :system system)
-    (get-in @system [:optics `fibonacci])))
+    (get-in @system [:optics ::fibonacci])))
 
 (deftest optics
   (test/is (optic/passing? (optic/review!))))

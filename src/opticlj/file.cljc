@@ -54,7 +54,8 @@
 
 (defn rename [from-path to-path]
   #?(:clj  (.renameTo (io/file to-path) (io/file from-path))
-     :cljs (when (exists from-path) (fs.rename from-path to-path))))
+     :cljs (when (exists from-path)
+             (fs.rename from-path to-path (constantly nil)))))
 
 (defn delete [path]
   #?(:clj  (.delete (io/file path))

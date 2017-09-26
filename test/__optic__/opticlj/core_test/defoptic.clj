@@ -3,7 +3,7 @@
 (let
  [system (atom {:optics {}, :dir "test/__optic__"})]
  (optic/defoptic :opticlj.core-test/fibonacci (fib 10) :system system)
- (get-in @system [:optics 'opticlj.core-test/fibonacci]))
+ (get-in @system [:optics :opticlj.core-test/fibonacci]))
 
 {:form (fib 10),
  :result
@@ -17,7 +17,7 @@
   [21 34]
   [34 55]
   [55 89]),
- :sym opticlj.core-test/fibonacci,
+ :kw :opticlj.core-test/fibonacci,
  :file "test/__optic__/opticlj/core_test/fibonacci.clj",
  :err-file nil,
  :diff nil,

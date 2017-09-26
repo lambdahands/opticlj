@@ -20,11 +20,11 @@
 
 (defn fmt-result [result]
   (if (string? result)
-    (concat ["\""] (str/split (str/replace result "\"" "") #"\n") ["\""])
+    (concat ["\""] (str/split (str/replace result "\"" "") #"\n") ["\"" ""])
     [(pp/write result :stream nil) ""]))
 
-(defn form-output-stream [sym form result]
-  (str/join "\n" (concat [(str "(in-ns '" (namespace sym) ")") ""
+(defn form-output-stream [kw form result]
+  (str/join "\n" (concat [(str "(in-ns '" (namespace kw) ")") ""
                           (pp/write form :stream nil) ""]
                          (fmt-result result))))
 
@@ -44,10 +44,10 @@
 
 ;; Test checker
 
-(defn write [path sym form result]
-  (let [output   (form-output-stream sym form result)
+(defn write [path kw form result]
+  (let [output   (form-output-stream kw form result)
         err-path (file/err-path path)]
-    (merge {:form form :result result :sym sym}
+    (merge {:form form :result result :kw kw}
      (if-let [diff (and (file/exists path) (file/diff path err-path output))]
        (do (file/write err-path output)
            (err-optic path err-path diff))
