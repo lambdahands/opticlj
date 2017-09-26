@@ -18,15 +18,15 @@
 
 ;; Output stream writer
 
-(defn concat-result [output result]
+(defn fmt-result [result]
   (if (string? result)
-    (vec (concat ["\""] (str/split (str/replace result "\"" "") #"\n") ["\""]))
+    (concat ["\""] (str/split (str/replace result "\"" "") #"\n") ["\""])
     [(pp/write result :stream nil) ""]))
 
 (defn form-output-stream [sym form result]
-  (str/join "\n" (concat-result [(str "(in-ns '" (namespace sym) ")") ""
-                                 (pp/write form :stream nil) ""]
-                                result)))
+  (str/join "\n" (concat [(str "(in-ns '" (namespace sym) ")") ""
+                          (pp/write form :stream nil) ""]
+                         (fmt-result result))))
 
 ;; Optic data
 
