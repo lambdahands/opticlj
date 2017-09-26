@@ -1,6 +1,6 @@
 # opticlj
 
-opticlj is a Clojure expectation testing (also known as snapshot testing)
+opticlj is a Clojure(Script) expectation testing (also known as snapshot testing)
 library.
 
 ## Rationale
@@ -69,7 +69,7 @@ Let's define a function to test:
 Define an `optic` like so:
 
 ```clj
-(defoptic one-plus-one (add 1 1))
+(defoptic ::one-plus-one (add 1 1))
 ```
 
 This does two things:
@@ -95,7 +95,7 @@ output confirming the snapshot was checked:
 
 ```clj
 (defn add [x y]
-  (+ x y))
+  (+ x y 2))
 
 (one-plus-one)
 
@@ -170,10 +170,8 @@ nil
 
 ## Todo
 
-- [ ] Complete API documentation
-- [ ] Reimplement core API with stateless methods, allow for wider snapshots
 - [x] Warn if optics is undefined in the program yet exists in a file
 - [x] Add a `clean!` method to remove unused optics
 - [x] Use `defoptic` on `defoptic` _(Inception noise)_
-- [ ] lein/boot command integration
-- [ ] Pretty output, feat. colors
+- [ ] Complete API documentation
+- [ ] Reimplement core API with stateless methods

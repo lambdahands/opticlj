@@ -35,12 +35,16 @@
   `(let [optic# (get-in ~system [:optics ~sym])]
      (if optic#
        (when (and (:err-file optic#) (:file optic#))
+         (file/rename (:err-file optic#) (:file optic#))
          {:adjusted ((resolve ~sym))})
        {:failure (str "Could not find `" ~sym "` in defined optics")})))
 
+(defn kw->sym [kw]
+  (symbol (namespace kw) (name kw)))
+
 (defn adjust!
-  ([sym] (adjust!* @system* sym))
-  ([system sym] (adjust!* @system sym)))
+  ([kw] (adjust!* @system* (kw->sym kw)))
+  ([system kw] (adjust!* @system (kw->sym kw))))
 
 (defn adjust-all!
   ([] (adjust-all! system*))

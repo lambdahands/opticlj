@@ -2,7 +2,8 @@
   (:require [clojure.java.io :as io]
             [opticlj.core :as optic]
             [opticlj.file :as file]
-            [opticlj.writer :as writer]))
+            [opticlj.writer :as writer]
+            [clojure.test :as test :refer [deftest]]))
 
 (optic/defoptic ::form-output-stream
   (map (fn [[form result]]
@@ -20,3 +21,6 @@
   (let [system (atom {:optics {} :dir "test/__optic__"})]
     (optic/defoptic ::fibonacci (fib 10) :system system)
     (get-in @system [:optics `fibonacci])))
+
+(deftest optics
+  (test/is (optic/passing? (optic/review!))))
