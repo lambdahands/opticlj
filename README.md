@@ -172,8 +172,8 @@ nil
 
 - [ ] Complete API documentation
 - [ ] Reimplement core API with stateless methods, allow for wider snapshots
-- [ ] Warn if optics is undefined in the program yet exists in a file
-- [ ] Add a `clean!` method to remove unused optics
-- [ ] Use `defoptic` on `defoptic` _(Inception noise)_
+- [x] Warn if optics is undefined in the program yet exists in a file
+- [x] Add a `clean!` method to remove unused optics
+- [x] Use `defoptic` on `defoptic` _(Inception noise)_
 - [ ] lein/boot command integration
 - [ ] Pretty output, feat. colors

@@ -2,18 +2,10 @@
 
 (let
  [system (atom {:optics {}, :dir "test/__optic__"})]
- (optic/defoptic
-  fibonacci
-  (take 10 (iterate (fn [[a b]] [b (+ a b)]) [1 1]))
-  :system
-  system)
+ (optic/defoptic fibonacci (fib 10) :system system)
  (get-in @system [:optics 'opticlj.core-test/fibonacci]))
 
-{:file "test/__optic__/opticlj/core_test/fibonacci.clj",
- :passing? true,
- :diff nil,
- :err-file nil,
- :form (take 10 (iterate (fn [[a b]] [b (+ a b)]) [1 1])),
+{:form (fib 10),
  :result
  ([1 1]
   [1 2]
@@ -25,4 +17,8 @@
   [21 34]
   [34 55]
   [55 89]),
- :sym opticlj.core-test/fibonacci}
+ :sym opticlj.core-test/fibonacci,
+ :file "test/__optic__/opticlj/core_test/fibonacci.clj",
+ :err-file nil,
+ :diff nil,
+ :passing? true}
