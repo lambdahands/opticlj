@@ -20,7 +20,7 @@
 
 (defn fmt-result [result]
   (if (string? result)
-    (concat ["\""] (str/split result #"\n") ["\""])
+    (concat ["\""] (str/split result #"\n") ["\"" ""])
     [(pp/write result :stream nil) ""]))
 
 (defn form-output-stream [kw form result]
