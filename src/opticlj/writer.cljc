@@ -21,7 +21,7 @@
 (defn fmt-result [result]
   (if (string? result)
     (str/split (pp/write result :stream nil) #"\\n")
-    (pp/write result :stream nil)))
+    [(pp/write result :stream nil)]))
 
 (defn form-output-stream [kw form result]
   (str/join "\n" (concat [(str "(in-ns '" (namespace kw) ")") ""
