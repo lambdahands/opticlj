@@ -40,7 +40,7 @@ cases where correctness must be _"proven"_ (big air quotes).
 ## Installation
 
 ```
-[opticlj "1.0.0-alpha5"]
+[opticlj "1.0.0-alpha6"]
 ```
 
 [See on Clojars](https://clojars.org/opticlj)

@@ -20,13 +20,14 @@
 
 (defn fmt-result [result]
   (if (string? result)
-    (concat ["\""] (str/split result #"\n") ["\"" ""])
-    [(pp/write result :stream nil) ""]))
+    (str/split (pp/write result :stream nil) #"\\n")
+    (pp/write result :stream nil)))
 
 (defn form-output-stream [kw form result]
   (str/join "\n" (concat [(str "(in-ns '" (namespace kw) ")") ""
                           (pp/write form :stream nil) ""]
-                         (fmt-result result))))
+                         (fmt-result result)
+                         [""])))
 
 ;; Optic data
 
