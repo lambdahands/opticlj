@@ -38,6 +38,10 @@
   ([] (errors system*))
   ([system] (run! error (keys (:optics @system)))))
 
+(defn check [{:keys [kw passing?]}]
+  (when-not passing? (error kw))
+  passing?)
+
 (defn adjust!* [system kw]
   (if-let [optic (get-in system [:optics kw])]
     (when (and (:err-file optic) (:file optic))
@@ -99,8 +103,8 @@
    :else          (println "The below files aren't defined in the system with"
                            "the :dir" dir ". Run with :confirm to delete.")))
 
-(defn passing? [{:keys [passed failed exceptions] :as ugh}]
-  (= 0 (+ failed exceptions)))
+(defn ok? [{:keys [passed failed exceptions] :as review-result}]
+  (zero? (+ failed exceptions)))
 
 ;; TODO: Implement these utility functions in ClojureScript
 
