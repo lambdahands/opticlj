@@ -176,7 +176,7 @@ your compiler options. See the [test/opticlj/cljs](test/opticlj/cljs/) directory
 for an example of using opticlj with the [doo](https://github.com/bensu/doo)
 test runner.
 
-A convenience function, `opticlj.core/passing?`, exists to wrap opticlj's tests
+A convenience function, `opticlj.core/ok?`, exists to wrap opticlj's tests
 in a `cljs.test/deftest` expression. For example:
 
 ```clj

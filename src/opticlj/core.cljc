@@ -58,10 +58,10 @@
   ([system]
    (filter identity (map adjust! (keys (:optics @system))))))
 
-(defn review!* [f exceptions]
-  (try (f)
+(defn review!* [optic-fn exceptions]
+  (try (optic-fn)
        #?(:clj  (catch Exception e (swap! exceptions conj e))
-          :cljs (catch js/Error e (swap! exceptions conj e)))))
+          :cljs (catch js/Error  e (swap! exceptions conj e)))))
 
 (defn review!
   ([] (review! system*))
@@ -118,9 +118,8 @@
      ([] (clean! system* nil))
      ([k] (clean! system* k))
      ([system k]
-      (let [{:keys [optics dir]} @system
-            syms (filtered-syms dir optics)]
-        (clean-msg dir syms k)
+      (let [{:keys [optics dir]} @system]
+        (clean-msg dir (filtered-syms dir optics) k)
         (doseq [[sym path] syms]
           (when (= k :confirm)
             (file/delete path))
