@@ -21,7 +21,7 @@
 (defn fmt-result [result]
   (if (string? result)
     (str/split (zprint-str result) #"\\n")
-    [(zprint-st result)]))
+    [(zprint-str result)]))
 
 (defn form-output-stream [kw form result]
   (str/join "\n" (concat [(str "(in-ns '" (namespace kw) ")") ""
