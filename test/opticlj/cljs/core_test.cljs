@@ -5,4 +5,4 @@
 (defoptic ::two-plus-two (+ 2 2))
 
 (deftest optics
-  (test/is (optic/passing? (optic/review!))))
+  (test/is (optic/ok? (optic/review!))))

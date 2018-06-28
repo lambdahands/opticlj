@@ -23,4 +23,4 @@
     (get-in @system [:optics ::fibonacci])))
 
 (deftest optics
-  (test/is (optic/passing? (optic/review!))))
+  (test/is (optic/ok? (optic/review!))))
