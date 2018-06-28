@@ -120,7 +120,7 @@
      ([system k]
       (let [{:keys [optics dir]} @system]
         (clean-msg dir (filtered-syms dir optics) k)
-        (doseq [[sym path] syms]
+        (doseq [[sym path] optics]
           (when (= k :confirm)
             (file/delete path))
           (println path))))))

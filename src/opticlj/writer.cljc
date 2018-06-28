@@ -1,7 +1,7 @@
 (ns opticlj.writer
   (:require [clojure.string :as str]
-            [clojure.pprint :as pp]
-            [opticlj.file :as file])
+            [opticlj.file :as file]
+            [zprint.core :refer [zprint-str]])
   #?(:clj (:import [java.io Writer])))
 
 ;; Manage diff display
@@ -20,12 +20,12 @@
 
 (defn fmt-result [result]
   (if (string? result)
-    (str/split (pp/write result :stream nil) #"\\n")
-    [(pp/write result :stream nil)]))
+    (str/split (zprint-str result) #"\\n")
+    [(zprint-st result)]))
 
 (defn form-output-stream [kw form result]
   (str/join "\n" (concat [(str "(in-ns '" (namespace kw) ")") ""
-                          (pp/write form :stream nil) ""]
+                          (zprint-str form) ""]
                          (fmt-result result)
                          [""])))
 
