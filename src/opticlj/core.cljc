@@ -118,9 +118,10 @@
      ([] (clean! system* nil))
      ([k] (clean! system* k))
      ([system k]
-      (let [{:keys [optics dir]} @system]
-        (clean-msg dir (filtered-syms dir optics) k)
-        (doseq [[sym path] optics]
+      (let [{:keys [optics dir]} @system
+            syms (filtered-syms dir optics)]
+        (clean-msg dir syms)
+        (doseq [[sym path] syms]
           (when (= k :confirm)
             (file/delete path))
           (println path))))))
